@@ -5,11 +5,26 @@ module Api
 
       # GET /api/v1/jobs
       def index
-        if params[:user_id]
-          @jobs = Job.where(user_id: params[:user_idd])
-        else
-          @jobs = Job.all
+        begin
+          if params[:user_id]
+            query = Job.search(
+              query: {
+                match: {
+                  user_id: params[:user_id]
+                }
+              }
+            )
+          else
+            query = Job.search(query: { match_all: {} })
+          end
+
+          @jobs = query.results.records.map { |record| record._source }
+        rescue StandardError => e
+          # If Elasticsearch is down or any error occurs, fallback to fetching from the DB
+          Rails.logger.error("Elasticsearch error: #{e.message}")
+          @jobs = Job.includes(:user).all
         end
+
         render json: @jobs
       end
 
@@ -23,6 +38,8 @@ module Api
         @job = Job.new(job_params)
 
         if @job.save
+          # Write the newly created job to the cache
+          write_cache(@job)
           render json: @job, status: :created
         else
           render json: { errors: @job.errors.full_messages }, status: :unprocessable_entity
@@ -32,6 +49,9 @@ module Api
       # PATCH/PUT /api/v1/jobs/1
       def update
         if @job.update(job_params)
+          # Automatically overwrite the old cache with the updated job data
+          write_cache(@job)
+
           render json: @job
         else
           render json: { errors: @job.errors.full_messages }, status: :unprocessable_entity
@@ -40,14 +60,22 @@ module Api
 
       # DELETE /api/v1/jobs/1
       def destroy
+        # Remove the job from the cache first, before the object is gone
+        delete_cache(@job)
+
         @job.destroy
+
         head :no_content
       end
 
       private
 
       def set_job
-        @job = Job.find(params[:id])
+        # Fetch the job from the cache (or database if not found in cache)
+        @job = fetch_cache(params[:id], klass: Job)
+
+        # If the job is not found, return a 404 Not Found
+        render json: { errors: ['Job not found'] }, status: :not_found unless @job
       end
 
       def job_params
