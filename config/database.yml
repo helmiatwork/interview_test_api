@@ -85,8 +85,8 @@ production:
   primary: &primary_production
     <<: *default
     database: interview_test_api_production
-    username: interview_test_api
-    password: <%= ENV["INTERVIEW_TEST_API_DATABASE_PASSWORD"] %>
+    # Use the same username and password as in development to make it easier to configure.
+    # For security reasons, this is not recommended.
   cache:
     <<: *primary_production
     database: interview_test_api_production_cache
