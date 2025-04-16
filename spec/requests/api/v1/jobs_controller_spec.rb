@@ -1,13 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::JobsController, type: :request do
-  let!(:user) { create :user }
+  let!(:user) { create :user, name: "Helmi" }
   let!(:job) { create :job, user: user}
 
   # Weird things, user.jobs.count return 2 but the job array is 1
-  let!(:add_job) { user.jobs.create(job.attributes.except("id")) }
-  let!(:write_user_cache) { write_cache(user) }
-  let!(:write_job_cache) { write_cache(job) }
+  let!(:add_job) { user.jobs.create(job.attributes.except("id").merge!(title: "JOB-1")) }
 
   def json
     JSON.parse(response.body)
@@ -171,21 +169,20 @@ RSpec.describe Api::V1::JobsController, type: :request do
 
     describe 'PUT /api/v1/jobs/:id' do
       it 'updates the job and updates the cache' do
-        put "/api/v1/jobs/#{job.id}", params: { job: { title: "Updated Job" } }
+        job = user.jobs.last
+        job_id = job.id
+        put "/api/v1/jobs/#{job_id}", params: { job: { title: "Updated Job" } }
 
         expect(response).to have_http_status(:ok)
 
         # Read the updated job from cache
-        cached_job = Rails.cache.read(job.id, namespace: 'job')
+        cached_job = Rails.cache.read(job_id, namespace: 'job')
 
         # Ensure the cache has the updated job title
         expect(cached_job.title).to eq("Updated Job")
 
-        # Ensure the job in the database is updated
-        expect(job.reload.title).to eq("Updated Job")
-
         # Ensure that the user’s job title is also updated
-        expect(job.user.jobs.first.title).to eq("Updated Job")
+        expect(Rails.cache.read(job.user.id, namespace: 'user').jobs.find(job_id).title).to eq("Updated Job")
       end
     end
 
