@@ -139,7 +139,7 @@ RSpec.describe Api::V1::UsersController, type: :request do
         it 'fetches user from DB and stores it in the cache' do
           delete_cache(user)
 
-          expect(Rails.cache).to receive(:fetch).with(user.id.to_s, namespace: 'user', expires_in: 60.minutes).and_call_original
+          expect(Rails.cache).to receive(:fetch).with(user.id.to_s, namespace: 'user').and_call_original
 
           get "/api/v1/users/#{user.id}"
           expect(response).to have_http_status(:ok)

@@ -6,6 +6,8 @@ RSpec.describe Api::V1::JobsController, type: :request do
 
   # Weird things, user.jobs.count return 2 but the job array is 1
   let!(:add_job) { user.jobs.create(job.attributes.except("id")) }
+  let!(:write_user_cache) { write_cache(user) }
+  let!(:write_job_cache) { write_cache(job) }
 
   def json
     JSON.parse(response.body)
@@ -139,7 +141,7 @@ RSpec.describe Api::V1::JobsController, type: :request do
       context 'when job is not cached' do
         it 'fetches job from DB and stores it in the cache' do
           delete_cache(job)
-          expect(Rails.cache).to receive(:fetch).with(job.id.to_s, namespace: 'job', expires_in: 60.minutes).and_call_original
+          expect(Rails.cache).to receive(:fetch).with(job.id.to_s, namespace: 'job').and_call_original
           get "/api/v1/jobs/#{job.id}"
           expect(response).to have_http_status(:ok)
         end
@@ -163,6 +165,7 @@ RSpec.describe Api::V1::JobsController, type: :request do
         created_job = Job.find_by(title: "New Job")
         expect(Rails.cache.read(created_job.id, namespace: 'job')).to be_present
         expect(response).to have_http_status(:created)
+        expect(Rails.cache.read(user.id, namespace: 'user').jobs.count).to eq 3
       end
     end
 
