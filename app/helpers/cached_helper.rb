@@ -3,27 +3,51 @@ module CachedHelper
   # we ensure that cache entries do not stay indefinitely
   # and are cleared after a reasonable amount of time.
   # For large projects, you may consider using custom namespaces.
-  def write_cache(object)
-    # Define a namespace based on the object's class name to avoid clashes across models
+  require 'set'
+
+  def write_cache(object, cached = Set.new)
     namespace = object.class.name.underscore
+    cache_key = object.id
 
-    # Get all the :belongs_to associations for the object's class
+    # Skip if this object is already cached in this cycle
+    return if cached.include?(cache_key)
+
+    # Mark this object as cached
+    cached.add(cache_key)
+
+    # Get all associations
     belongs_to_associations = object.class.reflect_on_all_associations(:belongs_to).map(&:name)
+    has_many_associations = object.class.reflect_on_all_associations(:has_many).map(&:name)
 
-    # Cache each of the associated objects as well
+    # Combine associations for eager loading
+    includes_associations = belongs_to_associations + has_many_associations
+
+    # Reload with includes to prevent N+1
+    if includes_associations.present?
+      object = object.class.includes(includes_associations).find(object.id)
+    end
+
+    # Recursively cache belongs_to associations
     belongs_to_associations.each do |association|
-      associated_object = object.send(association)  # Access the associated object
-      if associated_object
-        # Recursively cache the associated object using its ID and namespace
-        write_cache(associated_object)
+      associated_object = object.public_send(association)
+      write_cache(associated_object, cached) if associated_object
+    end
+
+    # Recursively cache has_many associations
+    has_many_associations.each do |association|
+      associated_objects = object.public_send(association)
+      next unless associated_objects.present?
+
+      associated_objects.each do |assoc_obj|
+        write_cache(assoc_obj, cached)
       end
     end
 
-    # Cache the object itself using only its ID as the cache key and the namespace
+    # Cache the object itself
     Rails.cache.write(
       object.id,
       object,
-      namespace: object.class.name.underscore
+      namespace: namespace
     )
   end
 
