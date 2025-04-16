@@ -120,3 +120,33 @@ docker run hello-world
    export RAILS_ENV=production
    ```
 ---
+
+## Example Test With CURL
+### Create User
+```
+curl --location 'http://localhost:3000/api/v1/users' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "user": {
+        "name": "John Doe",
+        "email": "john.doe21@example.com",
+        "phone": "123-456-7890"
+    }
+}'
+```
+---
+
+### Create Jobs
+```
+curl --location 'http://localhost:3000/api/v1/jobs' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "job": {
+        "title": "Job in the morning",
+        "description": "clean the house",
+        "status": "in_progress",
+        "user_id": 67
+    }
+}'
+```
+---
