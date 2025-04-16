@@ -47,3 +47,17 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 end
+
+group :test do
+  gem 'simplecov', require: false
+  gem "faker", "~> 3.5"
+  gem "rspec-rails", "~> 7.1"
+  gem "benchmark-ips", "~> 2.14"
+  gem "factory_bot_rails", "~> 6.4"
+  gem 'webmock', '~> 3.0'
+  gem "database_cleaner-active_record", "~> 2.2"
+end
+
+gem 'elasticsearch-model', '~> 7.2.1'
+gem 'elasticsearch-rails', '~> 7.2.1'
+gem "redis", "~> 5.4"
