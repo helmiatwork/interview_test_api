@@ -59,5 +59,5 @@ group :test do
 end
 
 gem 'elasticsearch-model', '~> 7.2.1'
-gem 'elasticsearch-rails', '~> 7.2.1'
+gem 'elasticsearch-rails', '~> 8.0.0'
 gem "redis", "~> 5.4"
