@@ -30,7 +30,8 @@ module Api
 
       # GET /api/v1/jobs/1
       def show
-        render json: @job
+        fresh_when last_modified: @job.updated_at.utc, strong_etag: @job
+        render json: @job  # This will render @job while using @job for caching
       end
 
       # POST /api/v1/jobs

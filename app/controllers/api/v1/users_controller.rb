@@ -19,7 +19,8 @@ module Api
 
       # GET /api/v1/users/1
       def show
-        render json: @user
+        fresh_when last_modified: @user.updated_at.utc, strong_etag: @user
+        render json: @user  # This will render @user while using @user for caching
       end
 
       # POST /api/v1/users
