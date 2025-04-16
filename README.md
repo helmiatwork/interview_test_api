@@ -100,7 +100,7 @@ docker run hello-world
    rails db:create db:migrate
    ```
 
-6. **Seed Data and Reindex Elastic Seach**
+6. **Seed Data and Reindex Elastic Search**
    ```bash
    db:seed
    ```
@@ -115,7 +115,7 @@ docker run hello-world
    rails s
    ```
 ### ENV Production
-8. **change rails env:**
+9. **change rails env:**
    ```bash
    export RAILS_ENV=production
    ```
