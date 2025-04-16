@@ -1,8 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::JobsController, type: :request do
-  let!(:user) { create(:user) }
-  let!(:job) { create(:job, user: user) }
+  let!(:user) { create :user }
+  let!(:job) { create :job, user: user}
+
+  # Weird things, user.jobs.count return 2 but the job array is 1
+  let!(:add_job) { user.jobs.create(job.attributes.except("id")) }
 
   def json
     JSON.parse(response.body)
@@ -166,9 +169,20 @@ RSpec.describe Api::V1::JobsController, type: :request do
     describe 'PUT /api/v1/jobs/:id' do
       it 'updates the job and updates the cache' do
         put "/api/v1/jobs/#{job.id}", params: { job: { title: "Updated Job" } }
-        cached_job = Rails.cache.read(job.id, namespace: 'job')
-        expect(cached_job.title).to eq("Updated Job")
+
         expect(response).to have_http_status(:ok)
+
+        # Read the updated job from cache
+        cached_job = Rails.cache.read(job.id, namespace: 'job')
+
+        # Ensure the cache has the updated job title
+        expect(cached_job.title).to eq("Updated Job")
+
+        # Ensure the job in the database is updated
+        expect(job.reload.title).to eq("Updated Job")
+
+        # Ensure that the user’s job title is also updated
+        expect(job.user.jobs.first.title).to eq("Updated Job")
       end
     end
 
@@ -181,6 +195,7 @@ RSpec.describe Api::V1::JobsController, type: :request do
         delete "/api/v1/jobs/#{job.id}"
         expect(Rails.cache.read(job.id, namespace: 'job')).to be_nil
         expect(response).to have_http_status(:no_content)
+        expect(user.jobs.count).to eq(1)
       end
     end
   end
