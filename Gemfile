@@ -58,6 +58,6 @@ group :test do
   gem "database_cleaner-active_record", "~> 2.2"
 end
 
-gem 'elasticsearch-model', '~> 7.2.1'
+gem 'elasticsearch-model', '~> 8.0.0'
 gem 'elasticsearch-rails', '~> 7.2.1'
 gem "redis", "~> 5.4"
