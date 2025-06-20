@@ -51,7 +51,7 @@ end
 group :test do
   gem 'simplecov', require: false
   gem "faker", "~> 3.5"
-  gem "rspec-rails", "~> 7.1"
+  gem "rspec-rails", "~> 8.0"
   gem "benchmark-ips", "~> 2.14"
   gem "factory_bot_rails", "~> 6.4"
   gem 'webmock', '~> 3.0'
